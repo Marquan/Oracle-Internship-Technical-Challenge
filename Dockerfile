@@ -1,18 +1,27 @@
+# Use a Maven image to build the application
+FROM maven:3.9.4-eclipse-temurin-17 AS builder
 
-FROM gradle:jdk21-alpine AS build
+# Set the working directory inside the container
+WORKDIR /app
 
-COPY --chown=gradle:gradle . /home/gradle/src
+# Copy the Maven project files into the container
+COPY pom.xml ./
+COPY src ./src
 
-WORKDIR /home/gradle/src
+# Build the application
+RUN mvn clean package -DskipTests
 
-RUN gradle bootJar --no-daemon
+# Use a lightweight OpenJDK image to run the application
+FROM eclipse-temurin:17-jdk-alpine
 
-FROM gradle:jdk21-alpine
+# Set the working directory inside the container
+WORKDIR /app
 
-RUN mkdir /app
+# Copy the built JAR file from the builder stage
+COPY --from=builder /app/target/*.jar app.jar
 
-COPY --from=build /home/gradle/src/build/libs/*.jar /app/server-0.0.1-SNAPSHOT.jar
-
+# Expose the port that your Spring Boot app runs on
 EXPOSE 8080
 
-ENTRYPOINT ["java","-jar","/app/server-0.0.1-SNAPSHOT.jar"]
+# Run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]
