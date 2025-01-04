@@ -25,3 +25,5 @@ EXPOSE 8080
 
 # Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# command used to test: docker run -p 8080:8080 oracle-challenge-app
